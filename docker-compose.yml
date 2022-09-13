@@ -14,5 +14,12 @@ services:
             - ./library_back/.env
         depends_on:
             - postgres
+    frontend:
+        build: library_front
+        ports:
+            - 3002:3002
+        depends_on:
+            - postgres
+            - backend
 volumes:
     gces-database:
