@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+    postgres:
+        build: database
+        ports:
+            - 2003:2003
+        volumes:
+            - gces-database:/var/lib/postgresql/data
+volumes:
+    gces-database:
