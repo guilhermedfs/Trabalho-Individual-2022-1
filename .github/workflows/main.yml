@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build Docker
+      run: docker-compose build
+
+  UP_Test:
+    runs-on:  debian-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Docker-compose
+        run: docker-compose up -d
+      - name: Show docker-compose logs
+        run: docker-compose logs
+      - name: Stop Docker-compose
+        run: docker-compose stop
+      - name: Down Docker-compose
+        run: docker-compose down
+
+  tests:
+    runs-on:  ubuntu-latest
+    needs: UP_Test
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run Docker-compose
+        run: docker-compose up -d
+      - name: Run backend makemigration
+        run: docker-compose exec -T backend python manage.py makemigrations
+      - name: Run backend migrate fake 
+        run: docker-compose exec -T backend python manage.py migrate --fake
+      - name: Run backend test 
+        run: docker-compose exec -T backend python manage.py test
+      - name: Run frontend tests
+        run: docker-compose exec -T frontend npm test -- --watchAll=false
+  
+  lint:
+    runs-on:  ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v3
+      - name: Installing dependencies
+        run: pip install flake8
+      - name: Run backend lint
+        run: flake8 library_back
+      - name: Run frontend lint
+        run: flake8 library_front
